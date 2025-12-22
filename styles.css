@@ -55,3 +55,45 @@ text {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+
+/* Titan Colors */
+.node.red-titan {
+    fill: #ef4444; /* Red */
+    stroke: #991b1b; /* Dark red border */
+}
+
+.node.blue-titan {
+    fill: #3b82f6; /* Blue */
+    stroke: #1e3a8a; /* Dark blue border */
+}
+
+/* Selected Titan Highlight */
+.node.selected {
+    stroke: #fbbf24; /* Gold/yellow */
+    stroke-width: 4;
+    filter: drop-shadow(0 0 8px #fbbf24);
+}
+
+/* Possible Move Indicator */
+.node.possible-move {
+    fill: #86efac; /* Light green */
+    stroke: #16a34a; /* Dark green */
+    cursor: pointer;
+    animation: pulse 1s infinite;
+}
+
+/* Pulse animation for possible moves */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* Hover effect improvements */
+.node:hover {
+    stroke-width: 3;
+    filter: brightness(1.1);
+}
