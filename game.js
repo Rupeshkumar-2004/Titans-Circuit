@@ -28,7 +28,7 @@ const gameState ={
     historyIndex :-1,
 
     //for stating the circuit which are unlocked
-    currentCircuit : [3],
+    unlockedCircuit : [3],
 
     //for the time and time for each round
     timers : {
@@ -79,6 +79,7 @@ function titanAtANode(node){
             return {...titan};
         }
     }
+    return null;
 }
 
 //return whether a titan is there or not..
@@ -88,7 +89,7 @@ function isNodeEmpty(node){
 
 //for stwiching the player after each turn
 function switchPlayer(){
-    return gameState.currentPlayer === 'red' ? 'blue' : 'red';
+    gameState.currentPlayer = gameState.currentPlayer === 'red' ? 'blue' : 'red';
 }
 
 //for the completion of placement phase..
@@ -112,11 +113,11 @@ function debugState() {
 
 //--------------------------------------------------------------------------------------------------------------------------
 function getNodeElement(nodeId){
-    return document.querySelector('[nodeId ="${nodeId}"]');
+    return document.querySelector(`[data-node-id="${nodeId}"]`);
 }
 
 function getNodeData(nodeId){
-    return boardNotes.find(node => node.id === nodeId);
+    return boardNodes.find(node => node.id === nodeId);
 }
 
 function updateVisual(nodeId , player){
@@ -136,7 +137,7 @@ function highlightTitan(nodeId){
     })
 
     const circle =getNodeElement(nodeId);
-    if(!circle){
+    if(circle){
         circle.classList.add('selected');
     }
 }
@@ -149,27 +150,6 @@ function clearHighlights(){
 
 
 // from here implementing the event listener
-
-function handleNodeClick(event){
-    const clickedElement = event.target;
-
-    if(!clickedElement.classList.contains('node')) return;
-
-    const nodeId = clickedElement.getAttribute('nodeId');
-
-    if(gameState.phase === 'placement') handlePlacementEvent(clickedElement);
-    else if(gameState.phase === 'movement') handleMovementEvent(clickedElement);
-
-}
-
-
-function setupEventListeners(){
-    const board =document.querySelector('.board');
-
-    board.addEventListener('onclick',handleNodeClick);
-    console.log("event listner is beed setuped..")
-}
-
 
 // ============================================
 // INITIALIZATION
@@ -213,9 +193,39 @@ function handlePlacementClick(nodeId) {
   // TODO: Implement placement logic in Phase 3
   
   // For now, just test visual feedback:
-  updateNodeVisual(nodeId, gameState.currentPlayer);
+  updateVisual(nodeId, gameState.currentPlayer);
   switchPlayer();
 }
+
+
+function handleNodeClick(event){
+    const clickedElement = event.target;
+
+    if(!clickedElement.classList.contains('node')) return;
+
+    const nodeId = clickedElement.getAttribute('data-node-id');
+
+    console.log('Clicked node:', nodeId);
+    console.log('Current phase:', gameState.phase);
+    console.log('Current player:', gameState.currentPlayer);
+
+    if(gameState.phase === 'placement') {
+        handlePlacementClick(nodeId);
+    } else if(gameState.phase === 'movement') {
+        handleMovementClick(nodeId);
+    }
+
+}
+
+
+function setupEventListeners(){
+    const board =document.querySelector('.board');
+
+    board.addEventListener('click',handleNodeClick);
+    console.log("event listner is beed setuped..")
+}
+
+
 
 /**
  * Handle click during movement phase

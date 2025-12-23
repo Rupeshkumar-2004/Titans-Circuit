@@ -4,19 +4,46 @@ body {
     height: 100vh;
     width: 100vw;
     display: flex;
+    /* FIX 1: Stack items vertically (Title on top, Board below) */
+    flex-direction: column; 
     justify-content: center;
     align-items: center;
-    overflow: hidden; /* Prevents scrollbars */
+    overflow: hidden;
     background-color: #f8fafc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Moved font here for global use */
+}
+
+/* FIX 2: Style the Title so it looks like a header */
+.title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #0f172a;
+    margin-bottom: 20px; /* Space between title and board */
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* FIX 3: Placeholder styles for your Red/Blue divs (assuming they are UI/Score indicators) */
+.red, .blue {
+    /* You likely need to define dimensions or content for these to be visible */
+    /* For now, I'll hide them or you can style them as needed */
+    display: none; 
+}
+
+.Game-Area {
+    /* Ensures the wrapper centers its content */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .board {
-    /* Ensures the SVG scales down to fit smaller screens */
     max-width: 95vw; 
-    max-height: 95vh;
-    border: 1px solid #ccc;
+    max-height: 80vh; /* Reduced slightly to make room for the Title */
+    /* border: 1px solid #ccc;  <-- Optional: removing border usually looks cleaner for SVGs */
     background-color: white;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Optional shadow for depth */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-radius: 8px; /* Softens the corners */
 }
 
 /* Graph Element Styling */
@@ -26,29 +53,31 @@ body {
 }
 
 .node {
-    fill: #94a3b8;
+    fill: #94a3b8; /* Default empty node color */
     stroke: #0f172a;
     stroke-width: 2;
     cursor: pointer;
-    transition: fill 0.2s; /* smooth hover effect */
+    /* FIX 4: Transition all properties for smoother effects */
+    transition: all 0.2s ease; 
 }
 
+/* FIX 5: Use filter for hover instead of fill. 
+   This ensures Red Titans stay Red (just brighter) and Empty nodes stay Grey (just brighter). */
 .node:hover {
-    fill: #cbd5e1;
+    stroke-width: 3;
+    filter: brightness(1.15); /* Lightens whatever color the node is */
 }
 
 /* Text / Weight Label Styling */
 text {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 16px;
     font-weight: bold;
     fill: #000;
-    
-    /* Centers text exactly on the coordinate */
     dominant-baseline: middle;
     text-anchor: middle;
+    pointer-events: none; /* Good practice: prevents text from blocking node clicks */
     
-    /* "Halo" effect: White outline to make text readable over lines */
+    /* Halo Effect */
     paint-order: stroke;
     stroke: white;
     stroke-width: 4px;
@@ -58,42 +87,33 @@ text {
 
 /* Titan Colors */
 .node.red-titan {
-    fill: #ef4444; /* Red */
-    stroke: #991b1b; /* Dark red border */
+    fill: #ef4444;
+    stroke: #991b1b;
 }
 
 .node.blue-titan {
-    fill: #3b82f6; /* Blue */
-    stroke: #1e3a8a; /* Dark blue border */
+    fill: #3b82f6;
+    stroke: #1e3a8a;
 }
 
 /* Selected Titan Highlight */
 .node.selected {
-    stroke: #fbbf24; /* Gold/yellow */
+    stroke: #fbbf24;
     stroke-width: 4;
-    filter: drop-shadow(0 0 8px #fbbf24);
+    filter: drop-shadow(0 0 6px #fbbf24);
+    /* Note: filter here might conflict with hover filter. 
+       If you want both, combine them in a specific selector like .node.selected:hover */
 }
 
 /* Possible Move Indicator */
 .node.possible-move {
-    fill: #86efac; /* Light green */
-    stroke: #16a34a; /* Dark green */
+    fill: #86efac;
+    stroke: #16a34a;
     cursor: pointer;
-    animation: pulse 1s infinite;
+    animation: pulse 1.5s infinite; /* Slowed down slightly for elegance */
 }
 
-/* Pulse animation for possible moves */
 @keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.6;
-    }
-}
-
-/* Hover effect improvements */
-.node:hover {
-    stroke-width: 3;
-    filter: brightness(1.1);
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }

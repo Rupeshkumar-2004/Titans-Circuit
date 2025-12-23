@@ -96,8 +96,8 @@ function makeBoard(){
 
       //for selecting the specific node assigning then with 
       //their respective ids
-      circle.setAttribute("nodeId",nodes.id);
-      circle.setAttribute("ring",nodes.ring);
+      circle.setAttribute("data-node-id",nodes.id);
+      circle.setAttribute("data-ring",nodes.ring);
       svg.appendChild(circle)
     }
 
@@ -132,4 +132,4 @@ function makeBoard(){
     return nodes;
 }   
 
-const boardNotes = makeBoard();
+const boardNodes = makeBoard();
