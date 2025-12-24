@@ -132,4 +132,9 @@ function makeBoard(){
     return nodes;
 }   
 
-const boardNodes = makeBoard();
+let boardNodes; // Declare first
+
+document.addEventListener('DOMContentLoaded', () => {
+  boardNodes = makeBoard();
+  console.log('✅ Board rendered with', boardNodes.length, 'nodes');
+});
