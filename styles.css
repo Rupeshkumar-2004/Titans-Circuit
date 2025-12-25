@@ -177,3 +177,34 @@ text {
 .blue-score {
     color: #2563eb;
 }
+
+/* Control Panel Styling */
+.controls-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.1s, background-color 0.2s;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#start-btn { background-color: #22c55e; color: white; } /* Green */
+#pause-btn { background-color: #f59e0b; color: white; } /* Orange */
+#resume-btn { background-color: #3b82f6; color: white; } /* Blue */
+#reset-btn { background-color: #ef4444; color: white; } /* Red */

@@ -8,7 +8,17 @@
 </head>
 <body>
     <div class="title"> Titan's Circuit</div>
+    <div class="controls-container">
+       <button id="start-btn" onclick="startGame()">Start Game</button>
+       <button id="pause-btn" onclick="pauseGame()" disabled>Pause</button>
+        <button id="resume-btn" onclick="resumeGame()" style="display:none;">Resume</button>
+        <button id="reset-btn" onclick="resetGame()">Reset</button>
+    </div>
     <div class="score-container">
+      <div class="timer-container">
+        <div class="overall-timer">Total Time: <span id="game-time">06:00</span></div>
+        <div class="turn-timer">Turn: <span id="turn-time">15</span>s</div>
+      </div>
       <div class="player-score red-player">
         <span class="player-label">RED</span>
         <span class="red-score">0</span>

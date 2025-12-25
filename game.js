@@ -34,6 +34,7 @@ const gameState ={
     timers : {
         overAllTime :360,
         eachTurn :15,
+        currentTurnTime :15
     },
 
     //used during the movement phase
@@ -45,8 +46,13 @@ const gameState ={
 
     //if the game is over then to restart or what ??
     isGameOver : false,
-    winner :null
+    winner :null,
+
+    isGameActive : false,
+    isPaused : false,
 };
+
+let gameInterval = null;
 
 // Graph structure - all edges with weights
 const edges = [
@@ -83,6 +89,79 @@ const edges = [
   { node1: '12', node2: '18', weight: 1 }
 ];
 
+function startGame(){
+    if(gameState.isGameActive) return;
+
+    gameState.isGameActive = true;
+    gameState.isPaused =false;
+
+    gameInterval =setInterval(startTimer,1000);
+
+    document.getElementById('start-btn').disabled = true;
+    document.getElementById('pause-btn').disabled = false;
+    document.getElementById('reset-btn').disabled = false;
+    
+}
+
+function pauseGame(){
+    if(!gameState.isGameActive || gameState.isPaused) return;
+
+    gameState.isPaused = true;
+    clearInterval(gameInterval);
+
+    document.getElementById('pause-btn').style.display = 'inline-black';
+    document.getElementById('resume-btn').style.display = none;
+
+}
+
+function resumeGame() {
+    if (!gameState.isGameActive || !gameState.isPaused) return;
+
+    console.log("▶️ Game Resumed");
+    gameState.isPaused = false;
+    gameInterval = setInterval(startTimer, 1000); // Restart timer
+    
+    // Update Buttons UI: Show Pause, Hide Resume
+    document.getElementById('pause-btn').style.display = 'inline-block';
+    document.getElementById('resume-btn').style.display = 'none';
+}
+
+function resetGame(){
+    const confirnReset = confirm("Are you sure you need to restart the game?");
+    if(!confirnReset) return;
+
+    clearInterval(gameInterval);
+    gameState.isGameActive = false;
+    gameState.isGameOver = false;
+    gameState.isPaused = false;
+
+    gameState.phase = 'placement';
+    gameState.currentPlayer = 'red';
+    gameState.unlockedCircuits =[3];
+    gameState.scores = { red: 0, blue: 0 };
+    gameState.timers.overAllTime = 360;
+    gameState.timers.currentTurnTime = 15; // Reset turn timer
+    
+    // Reset Titans State
+    gameState.titans.red.forEach(t => { t.placed = false; t.nodeId = null; });
+    gameState.titans.blue.forEach(t => { t.placed = false; t.nodeId = null; });
+
+    // Reset Visuals
+    // 1. Remove all titan classes from board
+    document.querySelectorAll('.node').forEach(node => {
+        node.classList.remove('red-titan', 'blue-titan', 'selected', 'possible-move');
+    });
+    // 2. Reset Buttons
+    document.getElementById('start-btn').disabled = false;
+    document.getElementById('pause-btn').disabled = true;
+    document.getElementById('pause-btn').style.display = 'inline-block';
+    document.getElementById('resume-btn').style.display = 'none';
+    
+    // 3. Reset UI Displays
+    updateScoreDisplay();
+    updateTimerDisplay(); // Ensure this function exists from previous steps
+
+}
 //get a specific titan for the player
 function getTitan(player){
     return gameState.titans[player];
@@ -126,6 +205,8 @@ function isNodeEmpty(node){
 
 //for stwiching the player after each turn
 function switchPlayer(){
+    gameState.timers.currentTurnTime = gameState.timers.eachTurn;
+
     gameState.currentPlayer = gameState.currentPlayer === 'red' ? 'blue' : 'red';
 }
 
@@ -209,6 +290,7 @@ function initGame() {
   // Update UI to show current player
   updateUI();
   
+  UpdateTimerDisplay();
   console.log('✅ Ready to play!');
 }
 
@@ -388,9 +470,12 @@ function handleMovementClick(nodeId) {
 
         //assigning the node with the respective player color
         const selectedTitanPlayer = gameState.selectedTitan.id.startsWith('red') ? 'red' : 'blue';
+        
         updateVisual(nodeId, selectedTitanPlayer);
+        isTitanEliminated();
         updateScore();
 
+        checkGameEnd();
         //clearing the highlights..
         clearHighlights();
 
@@ -459,9 +544,18 @@ function handlePlacementClick(nodeId) {
 
 //function handles the click and decide how will it proceed futher in phase
 function handleNodeClick(event){
+
+    if(!gameState.isGameActive || gameState.isPaused || gameState.isGameOver){
+        return;
+    }
     const clickedElement = event.target;
 
     if(!clickedElement.classList.contains('node')) return;
+
+    if(gameState.isGameOver){
+        console.log("Game Over!!!!");
+        return;
+    }
 
     const nodeId = clickedElement.getAttribute('data-node-id');
 
@@ -475,4 +569,119 @@ function handleNodeClick(event){
         handleMovementClick(nodeId);
     }
 
+}
+
+
+//Logic for EndGame
+
+//checks whether the innemost circuit is full or not
+function checkGameEnd(){
+    if(isCircuitFull(1)){
+        endGame();
+        return true;
+    }
+    return false;
+}
+
+//decides the winner and reflects in the UI.
+function endGame(){
+    clearInterval(gameInterval);
+
+    gameState.isGameOver = true;
+
+    if(gameState.scores.red > gameState.scores.blue){
+        gameState.winner = 'red';
+    } else if(gameState.scores.blue > gameState.scores.red){
+        gameState.winner = 'blue';
+    } else {
+        gameState.winner = 'tie'; // Handle ties!
+    }
+
+    const message = gameState.winner === 'tie' 
+        ? `🤝 GAME OVER - IT'S A TIE!\n\n🔴 Red: ${gameState.scores.red}\n🔵 Blue: ${gameState.scores.blue}`
+        : `🎉 GAME OVER!\n\n🏆 Winner: ${gameState.winner.toUpperCase()}\n\n🔴 Red: ${gameState.scores.red}\n🔵 Blue: ${gameState.scores.blue}`;
+    
+    alert(message);
+    console.log(gameState.winner);
+
+}
+
+//titan elemination
+
+function isTitanEliminated(){
+    gameState.titans.red.forEach((titan) =>{
+        const adjacent =getAdjacentNodes(titan.nodeId);
+        let neighbourEnemies =0;
+        adjacent.forEach((node) =>{
+            const checkNeighbour =getNodeElement(node);
+            if(checkNeighbour.classList.contains('blue-titan')){
+                neighbourEnemies++;
+            }
+        })
+
+        if(neighbourEnemies === 3){
+            eliminateTitan(titan, 'red');
+        }
+    });
+
+    gameState.titans.blue.forEach((titan) =>{
+        const adjacent =getAdjacentNodes(titan.nodeId);
+        let neighbourEnemies =0;
+        adjacent.forEach((node) =>{
+            const checkNeighbour =getNodeElement(node);
+            if(checkNeighbour.classList.contains('red-titan')){
+                neighbourEnemies++;
+            }
+        })
+
+        if(neighbourEnemies === 3){
+            eliminateTitan(titan , 'blue');
+        }
+    });
+}
+
+function eliminateTitan(titan, owner){
+    console.log(`Eliminating ${titan.id} belong to ${owner}`);
+
+    const node =getNodeElement(titan.nodeId);
+    node.classList.remove('blue-titan','red-titan');
+    titan.placed = null;
+    titan.nodeId = null;
+
+    updateScore();
+}
+
+
+//Time logic
+
+function startTimer(){
+    gameState.timers.overAllTime--;
+    gameState.timers.currentTurnTime--;
+
+    UpdateTimerDisplay();
+
+    if(gameState.timers.currentTurnTime === 0){
+        switchPlayer();
+    }
+    else if(gameState.timers.overAllTime === 0){
+        endGame();
+    }
+}
+
+function UpdateTimerDisplay(){
+    const turnTime  = document.getElementById('turn-time');
+    const gameTime  = document.getElementById('game-time');
+
+    if(turnTime){
+        turnTime.innerText = gameState.timers.currentTurnTime;
+
+        turnTime.style.color = gameState.timers.currentTurnTime <=5 ? 'red' : 'black';
+    }
+
+    if(gameTime){
+
+        const min = Math.floor(gameState.timers.overAllTime/60);
+        const secs =gameState.timers.overAllTime%60;
+        gameTime.innerText = `${min}:${secs.toString().padStart(2,'0')}`;
+    }
 }
