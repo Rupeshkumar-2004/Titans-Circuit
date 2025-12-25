@@ -15,6 +15,7 @@
         <button id="reset-btn" onclick="resetGame()">Reset</button>
     </div>
     <div class="score-container">
+      <div class="turn-indicator" id="turn-indicator">RED'S TURN</div>
       <div class="timer-container">
         <div class="overall-timer">Total Time: <span id="game-time">06:00</span></div>
         <div class="turn-timer">Turn: <span id="turn-time">15</span>s</div>
@@ -33,5 +34,16 @@
     </div>
   <script src="board.js"></script>
   <script src="game.js"></script>
+  <div id="game-over-modal" class="modal hidden">
+  <div class="modal-content">
+        <h2>GAME OVER</h2>
+        <h1 id="winner-text">RED WINS!</h1>
+        <div class="final-score">
+            <span class="red">Red: <span id="final-red">0</span></span>
+            <span class="blue">Blue: <span id="final-blue">0</span></span>
+        </div>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+</div>
 </body>
 </html>

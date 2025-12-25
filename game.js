@@ -22,11 +22,6 @@ const gameState ={
         ]
     },
 
-    //for having the history of of the movement
-    //so that we can do undo and redo later...
-    movesHistory :[],
-    historyIndex :-1,
-
     //for stating the circuit which are unlocked
     unlockedCircuits : [3],
 
@@ -48,10 +43,12 @@ const gameState ={
     isGameOver : false,
     winner :null,
 
+    //for the control on the flow of teh game
     isGameActive : false,
     isPaused : false,
 };
 
+//for recording the time interval
 let gameInterval = null;
 
 // Graph structure - all edges with weights
@@ -89,9 +86,11 @@ const edges = [
   { node1: '12', node2: '18', weight: 1 }
 ];
 
+//To start the game when clicked on the start button
 function startGame(){
     if(gameState.isGameActive) return;
 
+    console.log("Let The Game begin !!!")
     gameState.isGameActive = true;
     gameState.isPaused =false;
 
@@ -103,21 +102,24 @@ function startGame(){
     
 }
 
+//to pause the game when clciked and have a resume button on that to resume 
 function pauseGame(){
     if(!gameState.isGameActive || gameState.isPaused) return;
 
+    console.log("Game is Paused")
     gameState.isPaused = true;
     clearInterval(gameInterval);
 
-    document.getElementById('pause-btn').style.display = 'inline-black';
-    document.getElementById('resume-btn').style.display = none;
+    document.getElementById('pause-btn').style.display = 'none';
+    document.getElementById('resume-btn').style.display = 'inline-block';
 
 }
 
+// function to resume the game ..
 function resumeGame() {
     if (!gameState.isGameActive || !gameState.isPaused) return;
 
-    console.log("▶️ Game Resumed");
+    console.log("Game Resumed");
     gameState.isPaused = false;
     gameInterval = setInterval(startTimer, 1000); // Restart timer
     
@@ -126,9 +128,10 @@ function resumeGame() {
     document.getElementById('resume-btn').style.display = 'none';
 }
 
+//function to reset the game..
 function resetGame(){
-    const confirnReset = confirm("Are you sure you need to restart the game?");
-    if(!confirnReset) return;
+    const confirmReset = confirm("Are you sure you need to restart the game?");
+    if(!confirmReset) return;
 
     clearInterval(gameInterval);
     gameState.isGameActive = false;
@@ -162,6 +165,7 @@ function resetGame(){
     updateTimerDisplay(); // Ensure this function exists from previous steps
 
 }
+
 //get a specific titan for the player
 function getTitan(player){
     return gameState.titans[player];
@@ -206,8 +210,17 @@ function isNodeEmpty(node){
 //for stwiching the player after each turn
 function switchPlayer(){
     gameState.timers.currentTurnTime = gameState.timers.eachTurn;
-
     gameState.currentPlayer = gameState.currentPlayer === 'red' ? 'blue' : 'red';
+    
+    // Update the visual indicator
+    const indicator = document.getElementById('turn-indicator');
+    if(indicator) {
+        indicator.innerText = `${gameState.currentPlayer.toUpperCase()}'S TURN`;
+        // Change background color based on player
+        indicator.style.backgroundColor = gameState.currentPlayer === 'red' ? '#ef4444' : '#3b82f6';
+    }
+    
+    updateTimerDisplay(); // Snap timer back to 15 immediately
 }
 
 //for the completion of placement phase..
@@ -279,7 +292,7 @@ function unlockNewCircuits(){
 // from here implementing the event listener
 
 function initGame() {
-  console.log('🎮 Game initialized!');
+  console.log('Game initialized!');
   
   // Show initial state
   debugState();
@@ -287,21 +300,12 @@ function initGame() {
   // Setup event listeners
   setupEventListeners();
   
-  // Update UI to show current player
-  updateUI();
-  
-  UpdateTimerDisplay();
-  console.log('✅ Ready to play!');
+
+  updateTimerDisplay();
+  console.log('Ready to play!');
 }
 
-/**
- * Update UI elements (scores, current player, etc.)
- */
-function updateUI() {
-  // We'll implement this properly later
-  // For now, just log
-  console.log(`Current turn: ${gameState.currentPlayer.toUpperCase()}`);
-}
+
 
 // Start game when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -438,7 +442,7 @@ function updateScoreDisplay(){
  * Handle click during movement phase
  */
 function handleMovementClick(nodeId) {
-    console.log('👟 Movement phase - clicked node:', nodeId);
+    console.log('Movement phase - clicked node:', nodeId);
     const clickedTitan =titanAtANode(nodeId);
 
     //this done because clicked titan donesn't have player datatype..
@@ -499,7 +503,7 @@ function setupEventListeners(){
 
 //handleing the placement phase of the game
 function handlePlacementClick(nodeId) {
-  console.log('🎯 Placement phase - clicked node:', nodeId);
+  console.log(' Placement phase - clicked node:', nodeId);
   const nodeData = getNodeData(nodeId);
   const nodeRing = nodeData.ring;
 
@@ -586,28 +590,35 @@ function checkGameEnd(){
 //decides the winner and reflects in the UI.
 function endGame(){
     clearInterval(gameInterval);
-
     gameState.isGameOver = true;
+    gameState.isGameActive = false;
 
-    if(gameState.scores.red > gameState.scores.blue){
-        gameState.winner = 'red';
-    } else if(gameState.scores.blue > gameState.scores.red){
-        gameState.winner = 'blue';
+    // Determine winner logic... (Keep your existing logic)
+    
+    // Show Modal
+    const modal = document.getElementById('game-over-modal');
+    const winnerText = document.getElementById('winner-text');
+    
+    document.getElementById('final-red').innerText = gameState.scores.red;
+    document.getElementById('final-blue').innerText = gameState.scores.blue;
+
+    if (gameState.scores.red > gameState.scores.blue) {
+        winnerText.innerText = "RED WINS!";
+        winnerText.style.color = "#ef4444";
+    } else if (gameState.scores.blue > gameState.scores.red) {
+        winnerText.innerText = "BLUE WINS!";
+        winnerText.style.color = "#3b82f6";
     } else {
-        gameState.winner = 'tie'; // Handle ties!
+        winnerText.innerText = "DRAW!";
+        winnerText.style.color = "#333";
     }
 
-    const message = gameState.winner === 'tie' 
-        ? `🤝 GAME OVER - IT'S A TIE!\n\n🔴 Red: ${gameState.scores.red}\n🔵 Blue: ${gameState.scores.blue}`
-        : `🎉 GAME OVER!\n\n🏆 Winner: ${gameState.winner.toUpperCase()}\n\n🔴 Red: ${gameState.scores.red}\n🔵 Blue: ${gameState.scores.blue}`;
-    
-    alert(message);
-    console.log(gameState.winner);
-
+    modal.classList.remove('hidden');
 }
 
 //titan elemination
 
+//check if there is any titan which is been elimated
 function isTitanEliminated(){
     gameState.titans.red.forEach((titan) =>{
         const adjacent =getAdjacentNodes(titan.nodeId);
@@ -640,6 +651,7 @@ function isTitanEliminated(){
     });
 }
 
+//if yes for the previous function then remove all the properties of the node
 function eliminateTitan(titan, owner){
     console.log(`Eliminating ${titan.id} belong to ${owner}`);
 
@@ -654,11 +666,12 @@ function eliminateTitan(titan, owner){
 
 //Time logic
 
+//starts the timer...
 function startTimer(){
     gameState.timers.overAllTime--;
     gameState.timers.currentTurnTime--;
 
-    UpdateTimerDisplay();
+    updateTimerDisplay();
 
     if(gameState.timers.currentTurnTime === 0){
         switchPlayer();
@@ -668,7 +681,8 @@ function startTimer(){
     }
 }
 
-function UpdateTimerDisplay(){
+//update the timer in the display or in the browser..
+function updateTimerDisplay(){
     const turnTime  = document.getElementById('turn-time');
     const gameTime  = document.getElementById('game-time');
 
