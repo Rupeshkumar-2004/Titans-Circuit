@@ -22,7 +22,7 @@ function makeBoard(){
           const rings = [
             { ring: 1, radius: 50, count : 6},
             { ring: 2, radius: 90, count : 6},
-            { ring: 3, radius: 120, count : 6}
+            { ring: 3, radius: 130, count : 6}
           ];
           
           //applying for each and making node for that and 
@@ -132,9 +132,4 @@ function makeBoard(){
     return nodes;
 }   
 
-let boardNodes; // Declare first
-
-document.addEventListener('DOMContentLoaded', () => {
-  boardNodes = makeBoard();
-  console.log('✅ Board rendered with', boardNodes.length, 'nodes');
-});
+let boardNodes = makeBoard();

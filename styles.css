@@ -35,9 +35,13 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 100%; /* Ensures the container spans the full width */
+    flex: 1;     /* Allows it to grow and fill vertical space */
 }
 
 .board {
+    width: 90vmin;
+    height: 90vmin;
     max-width: 95vw; 
     max-height: 80vh; /* Reduced slightly to make room for the Title */
     /* border: 1px solid #ccc;  <-- Optional: removing border usually looks cleaner for SVGs */
@@ -116,4 +120,60 @@ text {
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }
+}
+
+/* Score Display */
+.score-container {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 20px;
+}
+
+.player-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 120px;
+}
+
+.red-player {
+    background-color: #fee2e2;
+    border: 3px solid #ef4444;
+}
+
+.blue-player {
+    background-color: #dbeafe;
+    border: 3px solid #3b82f6;
+}
+
+.player-label {
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.red-player .player-label {
+    color: #991b1b;
+}
+
+.blue-player .player-label {
+    color: #1e3a8a;
+}
+
+.red-score, .blue-score {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.red-score {
+    color: #dc2626;
+}
+
+.blue-score {
+    color: #2563eb;
 }

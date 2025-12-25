@@ -137,6 +137,7 @@ function allPlaced(){
     return redPlaced && bluePlaced;
 }
 
+//for debugging the game..
 function debugState() {
   console.log('=== GAME STATE ===');
   console.log('Phase:', gameState.phase);
@@ -226,6 +227,192 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(initGame, 200);
 });
 
+//when a player select his titan then highlight the titan 
+function highlightTitan(nodeId){
+    document.querySelectorAll('.node').forEach((node) =>{
+        node.classList.remove('selected');
+    })
+
+    const circle =getNodeElement(nodeId);
+    if(circle){
+        circle.classList.add('selected');
+    }
+}
+
+//removing highlights from the remaining nodes
+function clearHighlights(){
+    document.querySelectorAll('.node').forEach( node => {
+        node.classList.remove('selected','possible-move');
+    });
+}
+
+// returns the adjacentNodes of a particular node
+function getAdjacentNodes(nodeId){
+    const adjacentNodes =[]
+
+    edges.forEach((edge) =>{
+        if(edge.node1 === nodeId){
+            adjacentNodes.push(edge.node2);
+        }
+        else if(edge.node2 === nodeId){
+            adjacentNodes.push(edge.node1);
+        }
+    });
+
+    return adjacentNodes;
+}
+
+//hightlights the possible moves for a particular node
+function possibleMoves(nodeId){
+    const adjacentNodes =getAdjacentNodes(nodeId);
+    const moves =[]
+
+    adjacentNodes.forEach((adjNodeId) => {
+        if(isNodeEmpty(adjNodeId)){
+            const node = getNodeElement(adjNodeId);
+            node.classList.add('possible-move');
+            moves.push(adjNodeId)
+        }
+    });
+
+    return moves;
+}
+
+//checks if a node is valid or not to move ??
+function validPossibleMove(fromNode,toNode){
+    const adjacent = getAdjacentNodes(fromNode);
+
+    if(!adjacent.includes(toNode)){
+        return false;
+    }
+    if(!isNodeEmpty(toNode)){
+        return false;
+    }
+
+    return true;
+}
+
+
+//Now its about score system 
+
+//checking which player has dominated which edge
+function checkEdgeDominance(node1 , node2){
+    const titan1 =titanAtANode(node1);
+    const titan2 =titanAtANode(node2);
+
+    if(!titan1 || !titan2){
+        return;
+    }
+
+    const titanPlayer1 =titan1.id.startsWith('red') ? 'red' : 'blue';
+    const titanplayer2 =titan2.id.startsWith('red') ? 'red': 'blue';
+
+    if(titanPlayer1 === titanplayer2){
+        return titanplayer2;
+    }
+
+    return null;
+}
+
+// updating the score in the gameState or the global variable.. 
+function updateScore(){
+    let redScore =0;
+    let blueScore =0;
+
+    edges.forEach((edge) =>{
+        if(checkEdgeDominance(edge.node1,edge.node2) === 'red'){
+            redScore +=edge.weight;
+        }
+        else if(checkEdgeDominance(edge.node1,edge.node2) === 'blue'){
+            blueScore +=edge.weight;
+        }
+    });
+
+    gameState.scores.red = redScore;
+    gameState.scores.blue =blueScore;
+
+    updateScoreDisplay();
+
+    console.log('current score',gameState.scores);
+}
+
+//reflecting the changes into the html span element..
+function updateScoreDisplay(){
+    const redScoreElement = document.querySelector('.red-score');
+    const blueScoreElement = document.querySelector('.blue-score');
+
+    if(redScoreElement){
+        redScoreElement.textContent = gameState.scores.red;
+    }
+
+    if(blueScoreElement){
+        blueScoreElement.textContent = gameState.scores.blue;
+    }
+
+    console.log(` Red ${gameState.scores.red} | Blue ${gameState.scores.blue}`);
+}
+
+/**
+ * Handle click during movement phase
+ */
+function handleMovementClick(nodeId) {
+    console.log('👟 Movement phase - clicked node:', nodeId);
+    const clickedTitan =titanAtANode(nodeId);
+
+    //this done because clicked titan donesn't have player datatype..
+    const titanPlayer = clickedTitan ? (clickedTitan.id.startsWith('red')? 'red' : 'blue'): null;
+    
+    //Case 1: Its a player turn and he clicked his titan 
+    if( clickedTitan && titanPlayer === gameState.currentPlayer){
+        //clear the previos node effects
+        clearHighlights();
+        //update the selected titan
+        gameState.selectedTitan =clickedTitan;
+        highlightTitan(nodeId);
+        //hightlight its possible moves.
+        possibleMoves(nodeId);
+    }
+
+    //Case 2: Its a players turn and his moves his titan..
+    //check the move is valid or not
+    else if(gameState.selectedTitan && validPossibleMove(gameState.selectedTitan.nodeId,nodeId)){
+
+        // getting the element node of the selected titan 
+        const titanToMove =getTitanById(gameState.selectedTitan.id);
+        const oldPosition = titanToMove.nodeId;
+        //kindoff clearing the hightlights
+        updateVisual(oldPosition,null);
+
+        //updating the selected titans node.. 
+        titanToMove.nodeId = nodeId;
+
+        //assigning the node with the respective player color
+        const selectedTitanPlayer = gameState.selectedTitan.id.startsWith('red') ? 'red' : 'blue';
+        updateVisual(nodeId, selectedTitanPlayer);
+        updateScore();
+
+        //clearing the highlights..
+        clearHighlights();
+
+        switchPlayer();
+    }
+    //Case 3 : If the players clicks other than these then reset it 
+    else{
+        console.log(`Invalid move..`)
+        gameState.selectedTitan = null;
+        clearHighlights();
+    }
+}
+
+//event listener for the click on the board..
+function setupEventListeners(){
+    const board =document.querySelector('.board');
+
+    board.addEventListener('click',handleNodeClick);
+    console.log("event listner is beed setuped..")
+}
+
+//handleing the placement phase of the game
 function handlePlacementClick(nodeId) {
   console.log('🎯 Placement phase - clicked node:', nodeId);
   const nodeData = getNodeData(nodeId);
@@ -255,6 +442,7 @@ function handlePlacementClick(nodeId) {
 
   // For now, just test visual feedback:
   updateVisual(nodeId, gameState.currentPlayer);
+  updateScore();
 
   if(isCircuitFull(nodeRing)){
     console.log("Lets move to the next circuits !!");
@@ -269,7 +457,7 @@ function handlePlacementClick(nodeId) {
   switchPlayer();
 }
 
-
+//function handles the click and decide how will it proceed futher in phase
 function handleNodeClick(event){
     const clickedElement = event.target;
 
@@ -287,110 +475,4 @@ function handleNodeClick(event){
         handleMovementClick(nodeId);
     }
 
-}
-
-
-function setupEventListeners(){
-    const board =document.querySelector('.board');
-
-    board.addEventListener('click',handleNodeClick);
-    console.log("event listner is beed setuped..")
-}
-
-//when a player select his titan then highlight the titan 
-function highlightTitan(nodeId){
-    document.querySelectorAll('.node').forEach((node) =>{
-        node.classList.remove('selected');
-    })
-
-    const circle =getNodeElement(nodeId);
-    if(circle){
-        circle.classList.add('selected');
-    }
-}
-
-//removing highlights from the remaining nodes
-function clearHighlights(){
-    document.querySelectorAll('.node').forEach( node => {
-        node.classList.remove('selected','possible-move');
-    });
-}
-
-function getAdjacentNodes(nodeId){
-    const adjacentNodes =[]
-
-    edges.forEach((edge) =>{
-        if(edge.node1 === nodeId){
-            adjacentNodes.push(edge.node2);
-        }
-        else if(edge.node2 === nodeId){
-            adjacentNodes.push(edge.node2);
-        }
-    });
-
-    return adjacentNodes;
-}
-
-function possibleMoves(nodeId){
-    const adjacentNodes =getAdjacentNodes(nodeId);
-    const moves =[]
-
-    adjacentNodes.forEach((adjNodeId) => {
-        if(isNodeEmpty(adjNodeIdnodeId)){
-            const node = getNodeElement(adjNodeIdnodeId);
-            node.classList.add('possible-moves');
-            moves.push(adjNodeId)
-        }
-    });
-
-    return moves;
-}
-
-function validPossibleMove(fromNode,toNode){
-    const adjacent = getAdjacentNodes(fromNode);
-
-    if(!adjacent.includes(toNode)){
-        return false;
-    }
-    if(!isNodeEmpty(toNode)){
-        return false;
-    }
-
-    return true;
-}
-
-
-/**
- * Handle click during movement phase
- */
-function handleMovementClick(nodeId) {
-    console.log('👟 Movement phase - clicked node:', nodeId);
-    const clickedTitan = getTitanById(nodeId);
-    
-    if( clickedTitan && clickedTitan.player === gameState.currentPlayer){
-        gameState.selectedTitan =clickedTitan;
-        highlightTitan(nodeId);
-        possibleMoves(nodeId);
-    }
-    else if(gameState.selectedTitan && validPossibleMove(gameState.selectedTitan.nodeId,nodeId)){
-
-        const titanToMove =getTitanById(gameState.selectedTitan.id);
-        const oldPosition = titanToMove.nodeId;
-        updateVisual(oldPosition,null);
-
-        titanToMove.nodeId = nodeId;
-
-        updateVisual(nodeId,gameState.selectedTitan.player);
-
-        clearHighlights();
-
-        switchPlayer();
-    }
-    else{
-        console.log(`Invalid move..`)
-        gameState.selectedTitan = null;
-        clearHighlights();
-    }
-  
-  // TODO: Implement movement logic in Phase 4
 }
